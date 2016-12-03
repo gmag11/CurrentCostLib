@@ -11,39 +11,24 @@
 
 #include <Ticker.h>
 #include <ArduinoJson.h>
-#include <list>
+#include <vector>
+#include <functional>
+#include <Stream.h>
+#include "Sensor.h"
 
 using namespace std;
 
 #define MAX_SENSORS 10		//Max number of channels of Current Cost sensor
+#define TEST
+#define DEBUG
 
-class Sensor_t {
-private:
-	
-	uint8_t sensor_id;
-	//long time_sensor;
-	//long last_time_sensor;
-	//int diff;
-	int watts;
-	//float tempr;
-	//double kwh;
-	//double kwh_hour;
-	//double kwh_day;
-	//double kwh_month;
-	//double kwh_year;
-	boolean connected = false;
 
-public:
 
-	Sensor_t(uint8_t id);
 
-	int getWatts();
-	int getSensorID();
-	boolean isConnected();
-
-};
+typedef std::function<void(uint8_t)> onSensorEvent_t;
 
 class CurrentCost {
+	friend class Sensor_t;
 
 public:
 
@@ -59,7 +44,7 @@ public:
 	* Gets sensor data to a String for output via Serial
 	* @param[out] Prettified data
 	*/
-	String get_sensor_data_str();
+	String get_sensor_data_str(uint8_t id);
 
 	/**
 	* Constructs CurrentCost object and initiates periodic tasks
@@ -67,18 +52,32 @@ public:
 	*/
 	CurrentCost();
 
-	uint8_t addSensor(sensor_t sensor);
+	void begin(Stream &port);
+
+	uint8_t addSensor(Sensor_t sensor);
+
+	/**
+	* Set a callback that triggers after a sync trial.
+	* @param[in] function with void(NTPSyncEvent_t) or std::function<void(NTPSyncEvent_t)> (only for ESP8266)
+	*				NTPSyncEvent_t equals 0 is there is no error
+	*/
+	void onSensorEvent(onSensorEvent_t handler);
 
 private:
 
 	uint8_t last_read_sensor = -1; // Sensor read in last lecture
-	std::list<sensor_t> sensors; // Sensor data storage
+	uint8_t numSensors = 0;
+	std::vector <Sensor_t> sensors; // Sensor data storage
+	float tempr;
+	onSensorEvent_t onSensorMeasEvent;
 
 	/**
 	* Processes CurrentCost XML message, extracting measurements and storing them on sensors
 	* @param[in] XML String got from CurrentCost serial port
 	*/
 	void process_ccost_xml(String msg);
+
+
 
 #ifdef TEST
 	Ticker sendTestMessage_ticker; // Ticker to simulate measurement result
@@ -88,23 +87,13 @@ private:
 	/**
 	* Simulate CurrentCost message every n seconds and show data over Serial
 	*/
-	static void sendTestMessage();
-	/**
-	* Generates a string with current time and date
-	* @param[out] String with current time and date
-	*/
-	String digitalClockString();
-
-	/**
-	* Accesory function to correctly format time data
-	* @param[in] a digit.
-	* @param[out] Digit with leading zero if needed
-	*/
-	String fillDigits(int digits);
-
+	void sendTestMessage();
+	static void s_sendTestMessage(void* arg);
 
 #endif //TEST
 };
+
+extern CurrentCost currentCost;
 
 #endif //_CURRENTCOSTLIB
 
