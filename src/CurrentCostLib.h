@@ -18,12 +18,9 @@
 
 using namespace std;
 
-#define MAX_SENSORS 10		//Max number of channels of Current Cost sensor
+#define MAX_SENSORS 2		//Max number of channels of Current Cost sensor
 #define TEST
 #define DEBUG
-
-
-
 
 typedef std::function<void(uint8_t)> onSensorEvent_t;
 

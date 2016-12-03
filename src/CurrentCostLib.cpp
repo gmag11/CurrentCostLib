@@ -22,7 +22,7 @@ void CurrentCost::begin(Stream &port) {
 #ifdef TEST
 	sendTestMessage_ticker.attach(6, &CurrentCost::s_sendTestMessage, static_cast<void*>(this)); // Program send test message
 #endif //TEST
-	DEBUGLOG("\nCC Parser test started");
+	DEBUGLOG("\nCC Parser test started\n");
 }
 
 uint8_t CurrentCost::addSensor(Sensor_t sensor)
@@ -40,14 +40,21 @@ uint8_t CurrentCost::addSensor(Sensor_t sensor)
 void CurrentCost::process_ccost_xml_test(String msg) {
 
 	int sensor_id = random(0, MAX_SENSORS);
+	DEBUGLOG("Test message start: id = %d. Current sensor vector size %d\n", sensor_id, sensors.size());
 
 	if (sensors.size() < sensor_id + 1) {
-		sensors.push_back(Sensor_t(sensor_id));
+		std::size_t currentSize = sensors.size();
+		std::size_t newSize = sensor_id + 1;
+		
+		for (int i = currentSize; i < newSize; i++) {
+			sensors.push_back(Sensor_t(i));
+			DEBUGLOG("------ Inserted new sensor id %d: new size %d\n", i, sensors.size());
+		}
 	}
 
 	//sensors[sensor_id].sensor_id = sensor_id;
 	sensors[sensor_id].setWatts(random(100, 1000));
-	tempr = 20;
+	tempr = float(random(1000, 3000))/100;
 	//sensors[sensor_id].time_sensor = millis();
 	//sensors[sensor_id].diff = sensor[sensor_id].time_sensor - sensor[sensor_id].last_time_sensor;
 	//sensors[sensor_id].last_time_sensor = sensor[sensor_id].time_sensor;
@@ -74,7 +81,7 @@ void CurrentCost::s_sendTestMessage(void* arg) {
 
 void CurrentCost::sendTestMessage() {
 	process_ccost_xml_test("");
-	Serial.println(get_sensor_data_str(last_read_sensor));
+	DEBUGLOG("Read from sensor -> %s\n\n",get_sensor_data_str(last_read_sensor).c_str());
 }
 
 #endif //TEST
@@ -96,7 +103,7 @@ String CurrentCost::get_sensor_data_str(uint8_t id) {
 		temp += " W. Temperature: ";
 		temp += tempr;
 	}
-	DEBUGLOG("get_sensor_data_str -> %s\n", temp.c_str());
+	//DEBUGLOG("Read from sensor -> %s\n", temp.c_str());
 	return temp;
 }
 
@@ -108,7 +115,13 @@ void CurrentCost::process_ccost_xml(String msg) {
 		if ((sensor_id >= 0) || (sensor_id < MAX_SENSORS)) {
 			//sensors[sensor_id].sensor_id = sensor_id;
 			if (sensors.size() < sensor_id + 1) {
-				sensors.push_back(Sensor_t(sensor_id));
+				std::size_t currentSize = sensors.size();
+				std::size_t newSize = sensor_id + 1;
+
+				for (int i = currentSize; i < newSize; i++) {
+					sensors.push_back(Sensor_t(i));
+					DEBUGLOG("------ Inserted new sensor id %d: new size %d\n", i, sensors.size());
+				}
 			}
 			idx = msg.indexOf("<watts>"); // look for watts tag
 			sensors[sensor_id].setWatts(msg.substring(idx + 7, idx + 12).toInt());
