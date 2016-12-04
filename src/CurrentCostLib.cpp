@@ -4,7 +4,7 @@
 
 #include "CurrentCostLib.h"
 
-#define DBG_OUTPUT_PORT Serial
+//#define DEBUG
 
 #ifdef DEBUG
 #define DEBUGLOG(...) DBG_OUTPUT_PORT.printf(__VA_ARGS__)
@@ -22,6 +22,7 @@ void CurrentCost::begin(Stream &port) {
 #ifdef TEST
 	sendTestMessage_ticker.attach(6, &CurrentCost::s_sendTestMessage, static_cast<void*>(this)); // Program send test message
 #endif //TEST
+	this->port = &port;
 	DEBUGLOG("\nCC Parser test started\n");
 }
 
@@ -37,7 +38,7 @@ uint8_t CurrentCost::addSensor(Sensor_t sensor)
 }
 
 #ifdef TEST
-void CurrentCost::process_ccost_xml_test(String msg) {
+void CurrentCost::process_ccost_xml(String msg) {
 
 	int sensor_id = random(0, MAX_SENSORS);
 	DEBUGLOG("Test message start: id = %d. Current sensor vector size %d\n", sensor_id, sensors.size());
@@ -70,7 +71,7 @@ void CurrentCost::process_ccost_xml_test(String msg) {
 	last_read_sensor = sensor_id;
 
 	if (onSensorMeasEvent) {
-		onSensorMeasEvent(sensor_id);
+		onSensorMeasEvent(sensor_id, getWatts(sensor_id), tempr);
 	}
 }
 
@@ -80,32 +81,15 @@ void CurrentCost::s_sendTestMessage(void* arg) {
 }
 
 void CurrentCost::sendTestMessage() {
-	process_ccost_xml_test("");
-	DEBUGLOG("Read from sensor -> %s\n\n",get_sensor_data_str(last_read_sensor).c_str());
+	process_ccost_xml("");
+	DEBUGLOG("Read from sensor -> %s\n\n",getSensorDataStr(last_read_sensor).c_str());
 }
 
-#endif //TEST
+void CurrentCost::handle() {
 
-String CurrentCost::get_sensor_data_str(uint8_t id) {
-	String temp = "";
-	if (id >= 0 && id < MAX_SENSORS) {
-
-		//temp += digitalClockString();
-		//temp += " ";
-		//temp += String(sensors[id].kwh, 6);//Delta time: %d
-		//temp += " kWh. for ";
-		//temp += String((double)((double)sensors[id].diff / 1000));
-		//temp += " Sec. ";
-		temp += "Sensor: ";
-		temp += sensors[id].getSensorID();
-		temp += " --> ";
-		temp += sensors[id].getWatts();
-		temp += " W. Temperature: ";
-		temp += tempr;
-	}
-	//DEBUGLOG("Read from sensor -> %s\n", temp.c_str());
-	return temp;
 }
+
+#else //No TEST
 
 void CurrentCost::process_ccost_xml(String msg) {
 	if (msg.indexOf("<hist>") == -1) { // If history message, discard it
@@ -133,7 +117,7 @@ void CurrentCost::process_ccost_xml(String msg) {
 			//sensor[sensor_id].diff = sensor[sensor_id].time_sensor - sensor[sensor_id].last_time_sensor; // Calculate last measurement age
 			//sensor[sensor_id].last_time_sensor = sensor[sensor_id].time_sensor;
 			//double sum = (double)((double)sensor[sensor_id].watts / 1000 * (double)sensor[sensor_id].diff / (1000 * 3600)); //Calculate kWh in this period using diff as time extension
-																															//TODO If last sensor measure is not valid it should not add kWh.
+			//TODO If last sensor measure is not valid it should not add kWh.
 			//sensor[sensor_id].kwh += sum;
 			//sensor[sensor_id].kwh_hour += sum;
 			//sensor[sensor_id].kwh_day += sum;
@@ -150,6 +134,48 @@ void CurrentCost::process_ccost_xml(String msg) {
 	}
 }
 
+void CurrentCost::handle() {
+	if (port->available()) {
+		String mensaje = port->readStringUntil('\n');
+		process_ccost_xml(mensaje);
+	}
+}
+
+#endif //TEST
+
+String CurrentCost::getSensorDataStr(uint8_t id) {
+	String temp = "";
+	if (id >= 0 && id < MAX_SENSORS) {
+
+		//temp += digitalClockString();
+		//temp += " ";
+		//temp += String(sensors[id].kwh, 6);//Delta time: %d
+		//temp += " kWh. for ";
+		//temp += String((double)((double)sensors[id].diff / 1000));
+		//temp += " Sec. ";
+		temp += "Sensor: ";
+		temp += sensors[id].getSensorID();
+		temp += " --> ";
+		temp += sensors[id].getWatts();
+		temp += " W. Temperature: ";
+		temp += tempr;
+	}
+	//DEBUGLOG("Read from sensor -> %s\n", temp.c_str());
+	return temp;
+}
+
+int CurrentCost::getWatts(uint8_t id)
+{
+	if (id >= 0 && id < sensors.size()) {
+		return sensors[id].getWatts();
+	}
+	else {
+		return -1;
+	}
+}
+
+
 void CurrentCost::onSensorEvent(onSensorEvent_t handler) {
+	DEBUGLOG("-- Handler registered\n");
 	onSensorMeasEvent = handler;
 }

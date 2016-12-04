@@ -18,30 +18,24 @@
 
 using namespace std;
 
+#define DBG_OUTPUT_PORT Serial
+
 #define MAX_SENSORS 2		//Max number of channels of Current Cost sensor
 #define TEST
-#define DEBUG
 
-typedef std::function<void(uint8_t)> onSensorEvent_t;
+typedef std::function<void(uint8_t,int,float)> onSensorEvent_t;
 
 class CurrentCost {
 	friend class Sensor_t;
 
 public:
 
-#ifdef TEST
-	/**
-	* Simulates CurrenCost measurement result
-	* @param[in] Dummy string to make this call compatible with process_ccost_xml(String)
-	*/
-	void process_ccost_xml_test(String msg);
-#endif //TEST
-
 	/**
 	* Gets sensor data to a String for output via Serial
 	* @param[out] Prettified data
+	* @param[in] Sensor ID
 	*/
-	String get_sensor_data_str(uint8_t id);
+	String getSensorDataStr(uint8_t id);
 
 	/**
 	* Constructs CurrentCost object and initiates periodic tasks
@@ -49,9 +43,16 @@ public:
 	*/
 	CurrentCost();
 
+	/**
+	* Starts power monitor
+	* @param[in] Stream to read for XML data
+	*/
 	void begin(Stream &port);
 
-	uint8_t addSensor(Sensor_t sensor);
+	/**
+	* Process input stream to search for data
+	*/
+	void handle();
 
 	/**
 	* Set a callback that triggers after a sync trial.
@@ -63,10 +64,11 @@ public:
 private:
 
 	uint8_t last_read_sensor = -1; // Sensor read in last lecture
-	uint8_t numSensors = 0;
+	uint8_t numSensors = 0; // Number of sensors in memory
 	std::vector <Sensor_t> sensors; // Sensor data storage
-	float tempr;
-	onSensorEvent_t onSensorMeasEvent;
+	float tempr; // Room temperature
+	Stream *port; // Stream to read from
+	onSensorEvent_t onSensorMeasEvent; // Function to be triggered when a measurement is received
 
 	/**
 	* Processes CurrentCost XML message, extracting measurements and storing them on sensors
@@ -74,12 +76,31 @@ private:
 	*/
 	void process_ccost_xml(String msg);
 
+	/**
+	* Reserve memory for a sensor whose data has been received
+	* @param[in] new sensor to add to memory
+	* @param[out] Status code 0 = OK, -1 = error
+	*/
+	uint8_t addSensor(Sensor_t sensor);
+
+	/**
+	* Gets last measured temperature
+	* @param[out] Room temperature
+	*/
+	float getTemp() {
+		return tempr;
+	}
+
+	/**
+	* Gets last measured power for given sensor
+	* @param[out] Watts
+	* @param[in] Sensor ID
+	*/
+	int getWatts(uint8_t id);
 
 
 #ifdef TEST
 	Ticker sendTestMessage_ticker; // Ticker to simulate measurement result
-#endif //TEST
-#ifdef TEST
 
 	/**
 	* Simulate CurrentCost message every n seconds and show data over Serial
