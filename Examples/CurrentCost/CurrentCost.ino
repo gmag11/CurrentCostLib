@@ -1,3 +1,4 @@
+#include <SoftwareSerial.h>
 #include <ArduinoJson.h>
 #include <Ticker.h>
 #include "CurrentCostLib.h"
@@ -10,12 +11,15 @@
 #define DEBUGLOG(...)
 #endif
 
+SoftwareSerial sserial(D4, D3);
+
 void processSensorEvent(uint8_t id, int watts, float tempr);
 
 void setup()
 {
 	Serial.begin(115200);
-	currentCost.begin(Serial);
+	sserial.begin(57600);
+	currentCost.begin(sserial);
 	currentCost.onSensorEvent(processSensorEvent);
 }
 
