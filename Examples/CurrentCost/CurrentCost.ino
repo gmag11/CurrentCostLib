@@ -1,5 +1,4 @@
-#include <SoftwareSerial.h>
-#include <ArduinoJson.h>
+#include <SoftwareSerial.h> // https://github.com/plerup/espsoftwareserial
 #include <Ticker.h>
 #include "CurrentCostLib.h"
 

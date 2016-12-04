@@ -10,7 +10,6 @@
 #endif
 
 #include <Ticker.h>
-#include <ArduinoJson.h>
 #include <vector>
 #include <functional>
 #include <Stream.h>
