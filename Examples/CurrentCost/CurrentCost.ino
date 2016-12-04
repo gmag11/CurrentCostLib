@@ -11,7 +11,7 @@
 #define DEBUGLOG(...)
 #endif
 
-SoftwareSerial sserial(D4, D3);
+SoftwareSerial sserial(D4, SW_SERIAL_UNUSED_PIN);
 
 void processSensorEvent(uint8_t id, int watts, float tempr);
 
