@@ -4,9 +4,10 @@
 
 #include "CurrentCostLib.h"
 
-#define DEBUG
+//#define DEBUG // Uncomment to send debug messages over serial
 
 #ifdef DEBUG
+#define DBG_OUTPUT_PORT Serial
 #define DEBUGLOG(...) DBG_OUTPUT_PORT.printf(__VA_ARGS__)
 #else
 #define DEBUGLOG(...)
@@ -54,7 +55,7 @@ void CurrentCost::process_ccost_xml(String msg) {
 	}
 
 	//sensors[sensor_id].sensor_id = sensor_id;
-	sensors[sensor_id].setWatts(random(100, 1000));
+	sensors[sensor_id].setWatts(random(500, 600));
 	tempr = float(random(1000, 3000))/100;
 	//sensors[sensor_id].time_sensor = millis();
 	//sensors[sensor_id].diff = sensor[sensor_id].time_sensor - sensor[sensor_id].last_time_sensor;
