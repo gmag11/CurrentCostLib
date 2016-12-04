@@ -4,7 +4,7 @@
 
 #include "CurrentCostLib.h"
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define DEBUGLOG(...) DBG_OUTPUT_PORT.printf(__VA_ARGS__)
@@ -93,43 +93,47 @@ void CurrentCost::handle() {
 
 void CurrentCost::process_ccost_xml(String msg) {
 	if (msg.indexOf("<hist>") == -1) { // If history message, discard it
-		int idx = msg.indexOf("<sensor>"); // Look for sensor tag
-		int sensor_id = (uint8_t)(msg.substring(idx + 8, idx + 9).toInt()); // Extract sensor id
-																			//Serial.println(sensor_id);
-		if ((sensor_id >= 0) || (sensor_id < MAX_SENSORS)) {
-			//sensors[sensor_id].sensor_id = sensor_id;
-			if (sensors.size() < sensor_id + 1) {
-				std::size_t currentSize = sensors.size();
-				std::size_t newSize = sensor_id + 1;
+		int idxSensor = msg.indexOf("<sensor>"); // Look for sensor tag
+		int idxWatts = msg.indexOf("<watts>"); // look for watts tag
+		int idxTemp = msg.indexOf("<tmpr>"); // Look for tmpr tag
+		if (idxSensor >= 0 && idxWatts >= 0 && idxTemp >= 0) { // Discard message if not all data is inside
+			int sensor_id = (uint8_t)(msg.substring(idxSensor + 8, idxSensor + 9).toInt()); // Extract sensor id
+																				//Serial.println(sensor_id);
+			if ((sensor_id >= 0) || (sensor_id < MAX_SENSORS)) {
+				//sensors[sensor_id].sensor_id = sensor_id;
+				if (sensors.size() < sensor_id + 1) {
+					std::size_t currentSize = sensors.size();
+					std::size_t newSize = sensor_id + 1;
 
-				for (int i = currentSize; i < newSize; i++) {
-					sensors.push_back(Sensor_t(i));
-					DEBUGLOG("------ Inserted new sensor id %d: new size %d\n", i, sensors.size());
+					for (int i = currentSize; i < newSize; i++) {
+						sensors.push_back(Sensor_t(i));
+						DEBUGLOG("------ Inserted new sensor id %d: new size %d\n", i, sensors.size());
+					}
 				}
+				//idx = msg.indexOf("<watts>"); // look for watts tag
+				sensors[sensor_id].setWatts(msg.substring(idxWatts + 7, idxWatts + 12).toInt());
+				//idx = msg.indexOf("<tmpr>"); // Look for tmpr tag
+				tempr = msg.substring(idxTemp + 6, idxTemp + 10).toFloat();
+
+				// TODO time_sensor is not needed. It is used temporally only.
+				//sensor[sensor_id].time_sensor = millis(); // Assign current time
+				//sensor[sensor_id].diff = sensor[sensor_id].time_sensor - sensor[sensor_id].last_time_sensor; // Calculate last measurement age
+				//sensor[sensor_id].last_time_sensor = sensor[sensor_id].time_sensor;
+				//double sum = (double)((double)sensor[sensor_id].watts / 1000 * (double)sensor[sensor_id].diff / (1000 * 3600)); //Calculate kWh in this period using diff as time extension
+				//TODO If last sensor measure is not valid it should not add kWh.
+				//sensor[sensor_id].kwh += sum;
+				//sensor[sensor_id].kwh_hour += sum;
+				//sensor[sensor_id].kwh_day += sum;
+				//sensor[sensor_id].kwh_month += sum;
+				//sensor[sensor_id].kwh_year += sum;
+				sensors[sensor_id].setConnected(true);
+				last_read_sensor = sensor_id;
+
+				if (onSensorMeasEvent) {
+					onSensorMeasEvent(sensor_id, getWatts(sensor_id), tempr);
+				}
+
 			}
-			idx = msg.indexOf("<watts>"); // look for watts tag
-			sensors[sensor_id].setWatts(msg.substring(idx + 7, idx + 12).toInt());
-			idx = msg.indexOf("<tmpr>"); // Look for tmpr tag
-			tempr = msg.substring(idx + 6, idx + 10).toFloat();
-
-			// TODO time_sensor is not needed. It is used temporally only.
-			//sensor[sensor_id].time_sensor = millis(); // Assign current time
-			//sensor[sensor_id].diff = sensor[sensor_id].time_sensor - sensor[sensor_id].last_time_sensor; // Calculate last measurement age
-			//sensor[sensor_id].last_time_sensor = sensor[sensor_id].time_sensor;
-			//double sum = (double)((double)sensor[sensor_id].watts / 1000 * (double)sensor[sensor_id].diff / (1000 * 3600)); //Calculate kWh in this period using diff as time extension
-			//TODO If last sensor measure is not valid it should not add kWh.
-			//sensor[sensor_id].kwh += sum;
-			//sensor[sensor_id].kwh_hour += sum;
-			//sensor[sensor_id].kwh_day += sum;
-			//sensor[sensor_id].kwh_month += sum;
-			//sensor[sensor_id].kwh_year += sum;
-			sensors[sensor_id].setConnected(true);
-			last_read_sensor = sensor_id;
-
-			if (onSensorMeasEvent) {
-				onSensorMeasEvent(sensor_id);
-			}
-
 		}
 	}
 }
@@ -137,6 +141,7 @@ void CurrentCost::process_ccost_xml(String msg) {
 void CurrentCost::handle() {
 	if (port->available()) {
 		String mensaje = port->readStringUntil('\n');
+		DEBUGLOG("%s\n", mensaje.c_str());
 		process_ccost_xml(mensaje);
 	}
 }

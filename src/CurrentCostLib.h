@@ -21,7 +21,7 @@ using namespace std;
 #define DBG_OUTPUT_PORT Serial
 
 #define MAX_SENSORS 2		//Max number of channels of Current Cost sensor
-#define TEST
+//#define TEST
 
 typedef std::function<void(uint8_t,int,float)> onSensorEvent_t;
 
