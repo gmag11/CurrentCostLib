@@ -21,7 +21,7 @@ CurrentCost::CurrentCost() {
 
 void CurrentCost::begin(Stream &port) {
 #ifdef TEST
-	sendTestMessage_ticker.attach(6, &CurrentCost::s_sendTestMessage, static_cast<void*>(this)); // Program send test message
+	sendTestMessage_ticker.attach(TEST_PERIOD, &CurrentCost::s_sendTestMessage, static_cast<void*>(this)); // Program send test message
 #endif //TEST
 	this->port = &port;
 	DEBUGLOG("\nCC Parser test started\n");
@@ -55,7 +55,7 @@ void CurrentCost::process_ccost_xml(String msg) {
 	}
 
 	//sensors[sensor_id].sensor_id = sensor_id;
-	sensors[sensor_id].setWatts(random(500, 600));
+	sensors[sensor_id].setWatts(random(sensor_id*100, (sensor_id+1)*100));
 	tempr = float(random(1000, 3000))/100;
 	//sensors[sensor_id].time_sensor = millis();
 	//sensors[sensor_id].diff = sensor[sensor_id].time_sensor - sensor[sensor_id].last_time_sensor;
