@@ -9,7 +9,15 @@
 #include "WProgram.h"
 #endif
 
+//#define TEST // Uncomment to simulate readings from CurrentCost sensor without a real one
+#ifdef TEST
+#define TEST_PERIOD 1
+#endif
+
+#ifdef TEST
 #include <Ticker.h>
+#endif
+
 #include <vector>
 #include <functional>
 #include <Stream.h>
@@ -18,10 +26,6 @@
 using namespace std;
 
 #define MAX_SENSORS 2		//Max number of channels of Current Cost sensor
-#define TEST // Uncomment to simulate readings from CurrentCost sensor
-#ifdef TEST
-#define TEST_PERIOD 1
-#endif
 
 typedef std::function<void(uint8_t,int,float)> onSensorEvent_t;
 
