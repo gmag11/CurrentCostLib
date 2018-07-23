@@ -1,14 +1,5 @@
 #include <SoftwareSerial.h> // https://github.com/plerup/espsoftwareserial
-#include <Ticker.h>
-#include "CurrentCostLib.h"
-
-#define DEBUG
-
-#ifdef DEBUG
-#define DEBUGLOG(...) DBG_OUTPUT_PORT.printf(__VA_ARGS__)
-#else
-#define DEBUGLOG(...)
-#endif
+#include <CurrentCostLib.h>
 
 SoftwareSerial sserial(D4, SW_SERIAL_UNUSED_PIN);
 
@@ -28,7 +19,7 @@ void loop()
 }
 
 void processSensorEvent(uint8_t id, int watts, float tempr) {
-	DEBUGLOG("---->  Event %d\n", id);
-	DEBUGLOG("Power: %d W\n", watts);
-	DEBUGLOG("Temp: %.2f C\n\n", tempr);
+	Serial.printf ("---->  Event %d\n", id);
+	Serial.printf ("Power: %d W\n", watts);
+	Serial.printf ("Temp: %.2f C\n\n", tempr);
 }
