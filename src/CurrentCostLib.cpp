@@ -93,6 +93,7 @@ void CurrentCost::handle() {
 #else //No TEST
 
 void CurrentCost::process_ccost_xml(String msg) {
+	DEBUGLOG ("%s\n\n", msg.c_str ());
 	if (msg.indexOf("<hist>") == -1) { // If history message, discard it
 		int idxSensor = msg.indexOf("<sensor>"); // Look for sensor tag
 		int idxWatts = msg.indexOf("<watts>"); // look for watts tag
