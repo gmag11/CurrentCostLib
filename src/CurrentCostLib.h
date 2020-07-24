@@ -11,7 +11,7 @@
 
 //#define TEST // Uncomment to simulate readings from CurrentCost sensor without a real one
 #ifdef TEST
-#define TEST_PERIOD 1
+#define TEST_PERIOD 5
 #endif
 
 #ifdef TEST
@@ -25,7 +25,7 @@
 
 using namespace std;
 
-#define MAX_SENSORS 2		//Max number of channels of Current Cost sensor
+#define MAX_SENSORS 10		//Max number of channels of Current Cost sensor
 
 typedef std::function<void(uint8_t,int,float)> onSensorEvent_t;
 
